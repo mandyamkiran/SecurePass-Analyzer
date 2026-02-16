@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Password Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #141e30, #243b55);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+        }
+
+        .container {
+            background: #1f2a40;
+            padding: 30px;
+            border-radius: 15px;
+            width: 420px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 85%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        .toggle {
+            cursor: pointer;
+            font-size: 12px;
+            color: #00d4ff;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00aacc;
+        }
+
+        .strength-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: #444;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease-in-out;
+        }
+
+        .weak { background: red; }
+        .medium { background: orange; }
+        .strong { background: limegreen; }
+
+        .result {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .hash-box {
+            word-wrap: break-word;
+            background: #2f3b55;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔐 Advanced Password Analyzer</h2>
+
+    <form method="POST">
+        <input type="password" id="password" name="password" placeholder="Enter password" required>
+        <div class="toggle" onclick="togglePassword()">Show/Hide Password</div>
+
+        <div class="strength-bar">
+            <div id="strengthFill" class="strength-fill"></div>
+        </div>
+
+        <br>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if result %}
+    <div class="result">
+        <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
+        <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
+
+        <p><strong>SHA-256 Hash:</strong></p>
+        <div class="hash-box">{{ result.hash }}</div>
+
+        <p><strong>Suggested Strong Password:</strong> {{ result.suggested }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const passwordInput = document.getElementById("password");
+    const strengthFill = document.getElementById("strengthFill");
+
+    passwordInput.addEventListener("input", function() {
+        let val = passwordInput.value;
+        let strength = 0;
+
+        if (val.length > 5) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+        strengthFill.className = "strength-fill";
+
+        if (strength <= 1) {
+            strengthFill.classList.add("weak");
+            strengthFill.style.width = "30%";
+        } else if (strength == 2 || strength == 3) {
+            strengthFill.classList.add("medium");
+            strengthFill.style.width = "65%";
+        } else {
+            strengthFill.classList.add("strong");
+            strengthFill.style.width = "100%";
+        }
+    });
+
+    function togglePassword() {
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+        } else {
+            passwordInput.type = "password";
+        }
+    }
+</script>
+
+</body>
+</html>
