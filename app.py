@@ -62,6 +62,37 @@ def generate_strong_password(length=12):
     return ''.join(random.choice(characters) for _ in range(length))
 
 # -----------------------------
+# Security Score Calculator
+# -----------------------------
+def calculate_score(password, entropy):
+    score = 0
+
+    if len(password) >= 12:
+        score += 25
+    elif len(password) >= 8:
+        score += 15
+    else:
+        score += 5
+
+    if any(c.islower() for c in password):
+        score += 15
+    if any(c.isupper() for c in password):
+        score += 15
+    if any(c.isdigit() for c in password):
+        score += 15
+    if any(c in string.punctuation for c in password):
+        score += 15
+
+    if entropy >= 60:
+        score += 15
+    elif entropy >= 40:
+        score += 10
+    else:
+        score += 5
+
+    return min(score, 100)
+
+# -----------------------------
 # Main Route
 # -----------------------------
 @app.route("/", methods=["GET", "POST"])
@@ -76,37 +107,6 @@ def home():
             crack_time_seconds = (charset ** len(password)) / 1_000_000_000 if charset else 0
             hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-            warning = None
-            suggestions = []
+            score = calculate_score(password, entropy)
 
-            # Check if password is common
-            if password.lower() in COMMON_PASSWORDS:
-                warning = "⚠ This is a commonly used weak password!"
-
-            # Security Suggestions
-            if len(password) < 8:
-                suggestions.append("Use at least 8 characters.")
-            if not any(c.isupper() for c in password):
-                suggestions.append("Add uppercase letters.")
-            if not any(c.isdigit() for c in password):
-                suggestions.append("Include numbers.")
-            if not any(c in string.punctuation for c in password):
-                suggestions.append("Include special characters.")
-
-            result = {
-                "entropy": round(entropy, 2),
-                "crack_time": format_time(crack_time_seconds),
-                "hash": hashed_password,
-                "suggested": generate_strong_password(),
-                "warning": warning,
-                "suggestions": suggestions
-            }
-
-    return render_template("index.html", result=result)
-
-# -----------------------------
-# Run App (Production Ready)
-# -----------------------------
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+            # Strength label

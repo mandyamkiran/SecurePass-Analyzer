@@ -23,16 +23,6 @@
             text-align: center;
         }
 
-        h2 {
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            font-size: 13px;
-            opacity: 0.8;
-            margin-bottom: 20px;
-        }
-
         input {
             width: 85%;
             padding: 10px;
@@ -69,12 +59,16 @@
             font-size: 11px;
         }
 
-        ul {
-            padding-left: 18px;
+        .progress-bar {
+            background: #444;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
-        li {
-            margin-bottom: 5px;
+        .progress-fill {
+            height: 12px;
+            transition: width 0.6s ease-in-out;
         }
     </style>
 </head>
@@ -82,7 +76,7 @@
 
 <div class="container">
     <h2>🛡 SecurePass Analyzer</h2>
-    <div class="subtitle">AI-Powered Password Security Auditor</div>
+    <p>AI-Powered Password Security Auditor</p>
 
     <form method="POST">
         <input type="password" name="password" placeholder="Enter password" required>
@@ -92,6 +86,22 @@
 
     {% if result %}
     <div class="result">
+
+        <p><strong>Security Score:</strong> {{ result.score }}/100</p>
+        <p><strong>Strength:</strong>
+            <span style="color: {{ result.color }}; font-weight:bold;">
+                {{ result.strength_label }}
+            </span>
+        </p>
+
+        <div class="progress-bar">
+            <div class="progress-fill"
+                 style="width: {{ result.score }}%; background: {{ result.color }};">
+            </div>
+        </div>
+
+        <br>
+
         <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
         <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
 
