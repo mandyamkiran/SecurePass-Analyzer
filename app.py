@@ -109,4 +109,54 @@ def home():
 
             score = calculate_score(password, entropy)
 
-            # Strength label
+            # Strength label and color
+            if score < 40:
+                strength_label = "Weak"
+                color = "red"
+            elif score < 70:
+                strength_label = "Moderate"
+                color = "orange"
+            elif score < 85:
+                strength_label = "Strong"
+                color = "yellow"
+            else:
+                strength_label = "Very Strong"
+                color = "limegreen"
+
+            warning = None
+            suggestions = []
+
+            if password.lower() in COMMON_PASSWORDS:
+                warning = "⚠ This is a commonly used weak password!"
+
+            if len(password) < 8:
+                suggestions.append("Use at least 8 characters.")
+            if not any(c.isupper() for c in password):
+                suggestions.append("Add uppercase letters.")
+            if not any(c.isdigit() for c in password):
+                suggestions.append("Include numbers.")
+            if not any(c in string.punctuation for c in password):
+                suggestions.append("Include special characters.")
+
+            result = {
+                "entropy": round(entropy, 2),
+                "crack_time": format_time(crack_time_seconds),
+                "hash": hashed_password,
+                "suggested": generate_strong_password(),
+                "warning": warning,
+                "suggestions": suggestions,
+                "score": score,
+                "strength_label": strength_label,
+                "color": color
+            }
+
+    # 🔥 IMPORTANT: Always return response
+    return render_template("index.html", result=result)
+
+
+# -----------------------------
+# Production Run
+# -----------------------------
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
