@@ -31,6 +31,13 @@
             margin-bottom: 10px;
         }
 
+        .toggle {
+            cursor: pointer;
+            color: #00d4ff;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
         button {
             padding: 10px 20px;
             border: none;
@@ -79,8 +86,8 @@
     <p>AI-Powered Password Security Auditor</p>
 
     <form method="POST">
-        <input type="password" name="password" placeholder="Enter password" required>
-        <br>
+        <input type="password" id="password" name="password" placeholder="Enter password" required>
+        <div class="toggle" onclick="togglePassword()">Show</div>
         <button type="submit">Analyze</button>
     </form>
 
@@ -125,6 +132,21 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById("password");
+    const toggle = document.querySelector(".toggle");
+
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggle.innerText = "Hide";
+    } else {
+        passwordInput.type = "password";
+        toggle.innerText = "Show";
+    }
+}
+</script>
 
 </body>
 </html>

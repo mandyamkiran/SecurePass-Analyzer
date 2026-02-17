@@ -109,7 +109,6 @@ def home():
 
             score = calculate_score(password, entropy)
 
-            # Strength label and color
             if score < 40:
                 strength_label = "Weak"
                 color = "red"
@@ -150,7 +149,6 @@ def home():
                 "color": color
             }
 
-    # 🔥 IMPORTANT: Always return response
     return render_template("index.html", result=result)
 
 
