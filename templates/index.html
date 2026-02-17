@@ -2,41 +2,119 @@
 <html>
 <head>
     <title>SecurePass Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #141e30, #243b55);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+        }
+
+        .container {
+            background: #1f2a40;
+            padding: 30px;
+            border-radius: 15px;
+            width: 420px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 85%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00aacc;
+        }
+
+        .result {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .hash-box {
+            word-wrap: break-word;
+            background: #2f3b55;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        ul {
+            padding-left: 18px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>🛡 SecurePass Analyzer</h2>
-<p>AI-Powered Password Security Auditor</p>
+<div class="container">
+    <h2>🛡 SecurePass Analyzer</h2>
+    <div class="subtitle">AI-Powered Password Security Auditor</div>
 
-<form method="POST">
-    <input type="password" name="password" placeholder="Enter password" required>
-    <button type="submit">Analyze</button>
-</form>
+    <form method="POST">
+        <input type="password" name="password" placeholder="Enter password" required>
+        <br>
+        <button type="submit">Analyze</button>
+    </form>
 
-{% if result %}
-<div>
-    <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
-    <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
+    {% if result %}
+    <div class="result">
+        <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
+        <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
 
-    {% if result.warning %}
-    <p style="color:red;"><strong>{{ result.warning }}</strong></p>
+        {% if result.warning %}
+        <p style="color:red;"><strong>{{ result.warning }}</strong></p>
+        {% endif %}
+
+        {% if result.suggestions %}
+        <p><strong>Security Recommendations:</strong></p>
+        <ul>
+            {% for tip in result.suggestions %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <p><strong>SHA-256 Hash:</strong></p>
+        <div class="hash-box">{{ result.hash }}</div>
+
+        <p><strong>Suggested Strong Password:</strong> {{ result.suggested }}</p>
+    </div>
     {% endif %}
-
-    {% if result.suggestions %}
-    <p><strong>Security Recommendations:</strong></p>
-    <ul>
-        {% for tip in result.suggestions %}
-        <li>{{ tip }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
-    <p><strong>SHA-256 Hash:</strong></p>
-    <p>{{ result.hash }}</p>
-
-    <p><strong>Suggested Strong Password:</strong> {{ result.suggested }}</p>
 </div>
-{% endif %}
 
 </body>
 </html>
