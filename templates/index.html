@@ -38,18 +38,18 @@
             margin-bottom: 10px;
         }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #00d4ff;
-            color: black;
-            cursor: pointer;
-            font-weight: bold;
+        .progress-bar {
+            background: #444;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
         }
 
-        button:hover {
-            background: #00aacc;
+        .progress-fill {
+            height: 12px;
+            width: 0%;
+            transition: width 0.4s ease-in-out;
         }
 
         .result {
@@ -58,24 +58,21 @@
             font-size: 14px;
         }
 
-        .hash-box {
-            word-wrap: break-word;
-            background: #2f3b55;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
+        .suggestions {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #ffcc00;
         }
 
-        .progress-bar {
-            background: #444;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 12px;
-            transition: width 0.6s ease-in-out;
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -85,65 +82,87 @@
     <h2>🛡 SecurePass Analyzer</h2>
     <p>AI-Powered Password Security Auditor</p>
 
-    <form method="POST">
-        <input type="password" id="password" name="password" placeholder="Enter password" required>
-        <div class="toggle" onclick="togglePassword()">Show</div>
-        <button type="submit">Analyze</button>
-    </form>
+    <input type="password" id="password" placeholder="Enter password">
+    <div class="toggle" onclick="togglePassword()">Show</div>
 
-    {% if result %}
-    <div class="result">
+    <p><strong>Security Score:</strong> <span id="score">0</span>/100</p>
+    <p><strong>Strength:</strong> <span id="strengthLabel">-</span></p>
 
-        <p><strong>Security Score:</strong> {{ result.score }}/100</p>
-        <p><strong>Strength:</strong>
-            <span style="color: {{ result.color }}; font-weight:bold;">
-                {{ result.strength_label }}
-            </span>
-        </p>
-
-        <div class="progress-bar">
-            <div class="progress-fill"
-                 style="width: {{ result.score }}%; background: {{ result.color }};">
-            </div>
-        </div>
-
-        <br>
-
-        <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
-        <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
-
-        {% if result.warning %}
-        <p style="color:red;"><strong>{{ result.warning }}</strong></p>
-        {% endif %}
-
-        {% if result.suggestions %}
-        <p><strong>Security Recommendations:</strong></p>
-        <ul>
-            {% for tip in result.suggestions %}
-            <li>{{ tip }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        <p><strong>SHA-256 Hash:</strong></p>
-        <div class="hash-box">{{ result.hash }}</div>
-
-        <p><strong>Suggested Strong Password:</strong> {{ result.suggested }}</p>
+    <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
     </div>
-    {% endif %}
+
+    <div class="suggestions" id="suggestions"></div>
+
 </div>
 
 <script>
-function togglePassword() {
-    const passwordInput = document.getElementById("password");
-    const toggle = document.querySelector(".toggle");
+const passwordInput = document.getElementById("password");
+const scoreText = document.getElementById("score");
+const strengthLabel = document.getElementById("strengthLabel");
+const progressFill = document.getElementById("progressFill");
+const suggestionsBox = document.getElementById("suggestions");
 
+passwordInput.addEventListener("input", function () {
+    const password = passwordInput.value;
+
+    let score = 0;
+    let suggestions = [];
+
+    if (password.length >= 12) score += 25;
+    else if (password.length >= 8) score += 15;
+    else if (password.length > 0) score += 5;
+
+    if (/[a-z]/.test(password)) score += 15;
+    else suggestions.push("Add lowercase letters.");
+
+    if (/[A-Z]/.test(password)) score += 15;
+    else suggestions.push("Add uppercase letters.");
+
+    if (/[0-9]/.test(password)) score += 15;
+    else suggestions.push("Include numbers.");
+
+    if (/[^A-Za-z0-9]/.test(password)) score += 15;
+    else suggestions.push("Include special characters.");
+
+    if (password.length < 8)
+        suggestions.push("Use at least 8 characters.");
+
+    score = Math.min(score, 100);
+
+    scoreText.innerText = score;
+    progressFill.style.width = score + "%";
+
+    if (score < 40) {
+        strengthLabel.innerText = "Weak";
+        strengthLabel.style.color = "red";
+        progressFill.style.background = "red";
+    } else if (score < 70) {
+        strengthLabel.innerText = "Moderate";
+        strengthLabel.style.color = "orange";
+        progressFill.style.background = "orange";
+    } else if (score < 85) {
+        strengthLabel.innerText = "Strong";
+        strengthLabel.style.color = "yellow";
+        progressFill.style.background = "yellow";
+    } else {
+        strengthLabel.innerText = "Very Strong";
+        strengthLabel.style.color = "limegreen";
+        progressFill.style.background = "limegreen";
+    }
+
+    suggestionsBox.innerHTML = suggestions.length
+        ? "<strong>AI Suggestions:</strong><br>" + suggestions.join("<br>")
+        : "Excellent password!";
+});
+
+function togglePassword() {
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        toggle.innerText = "Hide";
+        document.querySelector(".toggle").innerText = "Hide";
     } else {
         passwordInput.type = "password";
-        toggle.innerText = "Show";
+        document.querySelector(".toggle").innerText = "Show";
     }
 }
 </script>
