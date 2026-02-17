@@ -1,5 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecurePass Analyzer</title>
+</head>
+<body>
+
+<h2>🛡 SecurePass Analyzer</h2>
+<p>AI-Powered Password Security Auditor</p>
+
+<form method="POST">
+    <input type="password" name="password" placeholder="Enter password" required>
+    <button type="submit">Analyze</button>
+</form>
+
 {% if result %}
-<div class="result">
+<div>
     <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
     <p><strong>Estimated Crack Time:</strong> {{ result.crack_time }}</p>
 
@@ -17,8 +32,11 @@
     {% endif %}
 
     <p><strong>SHA-256 Hash:</strong></p>
-    <div class="hash-box">{{ result.hash }}</div>
+    <p>{{ result.hash }}</p>
 
     <p><strong>Suggested Strong Password:</strong> {{ result.suggested }}</p>
 </div>
 {% endif %}
+
+</body>
+</html>
