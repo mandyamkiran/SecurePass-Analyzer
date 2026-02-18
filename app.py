@@ -1,160 +1,118 @@
 from flask import Flask, render_template, request
-import math
-import string
 import hashlib
-import random
-import os
+import math
+import secrets
+import string
 
 app = Flask(__name__)
 
-# -----------------------------
-# Common Weak Password List
-# -----------------------------
-COMMON_PASSWORDS = [
-    "123456", "password", "12345678", "qwerty",
-    "abc123", "admin", "123456789", "welcome",
-    "password123", "12345"
-]
 
-# -----------------------------
-# Entropy Calculation
-# -----------------------------
-def calculate_entropy(password):
+# -------------------------
+# PASSWORD ANALYSIS FUNCTION
+# -------------------------
+def analyze_password(password):
+    length = len(password)
+
+    if length == 0:
+        return None
+
+    # Character checks
+    has_lower = any(c.islower() for c in password)
+    has_upper = any(c.isupper() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    has_special = any(c in string.punctuation for c in password)
+
+    # Charset size
     charset = 0
-
-    if any(c.islower() for c in password):
+    if has_lower:
         charset += 26
-    if any(c.isupper() for c in password):
+    if has_upper:
         charset += 26
-    if any(c.isdigit() for c in password):
+    if has_digit:
         charset += 10
-    if any(c in string.punctuation for c in password):
+    if has_special:
         charset += 32
 
-    entropy = len(password) * math.log2(charset) if charset else 0
-    return entropy, charset
+    if charset == 0:
+        charset = 1
 
-# -----------------------------
-# Crack Time Formatter
-# -----------------------------
-def format_time(seconds):
-    minutes = seconds / 60
-    hours = minutes / 60
-    days = hours / 24
-    years = days / 365
+    # Entropy calculation (SAFE)
+    entropy = length * math.log2(charset)
 
-    if years >= 1:
-        return f"{round(years, 2)} years"
-    elif days >= 1:
-        return f"{round(days, 2)} days"
-    elif hours >= 1:
-        return f"{round(hours, 2)} hours"
-    elif minutes >= 1:
-        return f"{round(minutes, 2)} minutes"
+    # Score calculation
+    score = min(int((entropy / 80) * 100), 100)
+
+    # Strength label
+    if score < 40:
+        strength = "Weak"
+        color = "#ff4d4d"
+    elif score < 70:
+        strength = "Moderate"
+        color = "#ffb84d"
     else:
-        return f"{round(seconds, 2)} seconds"
+        strength = "Strong"
+        color = "#4dff88"
 
-# -----------------------------
-# Strong Password Generator
-# -----------------------------
-def generate_strong_password(length=12):
-    characters = string.ascii_letters + string.digits + string.punctuation
-    return ''.join(random.choice(characters) for _ in range(length))
+    # SAFE crack time (no huge exponent)
+    guesses_per_sec = 1_000_000_000
+    crack_time = (2 ** entropy) / guesses_per_sec
 
-# -----------------------------
-# Security Score Calculator
-# -----------------------------
-def calculate_score(password, entropy):
-    score = 0
-
-    if len(password) >= 12:
-        score += 25
-    elif len(password) >= 8:
-        score += 15
+    if crack_time < 60:
+        crack_display = f"{round(crack_time,2)} seconds"
+    elif crack_time < 3600:
+        crack_display = f"{round(crack_time/60,2)} minutes"
+    elif crack_time < 86400:
+        crack_display = f"{round(crack_time/3600,2)} hours"
     else:
-        score += 5
+        crack_display = f"{round(crack_time/86400,2)} days"
 
-    if any(c.islower() for c in password):
-        score += 15
-    if any(c.isupper() for c in password):
-        score += 15
-    if any(c.isdigit() for c in password):
-        score += 15
-    if any(c in string.punctuation for c in password):
-        score += 15
+    # SHA256
+    sha256_hash = hashlib.sha256(password.encode()).hexdigest()
 
-    if entropy >= 60:
-        score += 15
-    elif entropy >= 40:
-        score += 10
-    else:
-        score += 5
+    # Suggestions
+    suggestions = []
+    if length < 8:
+        suggestions.append("Use at least 8 characters.")
+    if not has_digit:
+        suggestions.append("Include numbers.")
+    if not has_special:
+        suggestions.append("Include special characters.")
+    if not has_upper:
+        suggestions.append("Include uppercase letters.")
 
-    return min(score, 100)
+    # Strong password generator
+    strong_password = ''.join(secrets.choice(
+        string.ascii_letters + string.digits + string.punctuation
+    ) for _ in range(12))
 
-# -----------------------------
-# Main Route
-# -----------------------------
+    return {
+        "score": score,
+        "strength": strength,
+        "color": color,
+        "entropy": round(entropy, 2),
+        "crack_time": crack_display,
+        "hash": sha256_hash,
+        "suggestions": suggestions,
+        "strong_password": strong_password
+    }
+
+
+# -------------------------
+# ROUTE
+# -------------------------
 @app.route("/", methods=["GET", "POST"])
 def home():
     result = None
 
     if request.method == "POST":
         password = request.form.get("password")
-
-        if password:
-            entropy, charset = calculate_entropy(password)
-            crack_time_seconds = (charset ** len(password)) / 1_000_000_000 if charset else 0
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-            score = calculate_score(password, entropy)
-
-            if score < 40:
-                strength_label = "Weak"
-                color = "red"
-            elif score < 70:
-                strength_label = "Moderate"
-                color = "orange"
-            elif score < 85:
-                strength_label = "Strong"
-                color = "yellow"
-            else:
-                strength_label = "Very Strong"
-                color = "limegreen"
-
-            warning = None
-            suggestions = []
-
-            if password.lower() in COMMON_PASSWORDS:
-                warning = "⚠ This is a commonly used weak password!"
-
-            if len(password) < 8:
-                suggestions.append("Use at least 8 characters.")
-            if not any(c.isupper() for c in password):
-                suggestions.append("Add uppercase letters.")
-            if not any(c.isdigit() for c in password):
-                suggestions.append("Include numbers.")
-            if not any(c in string.punctuation for c in password):
-                suggestions.append("Include special characters.")
-
-            result = {
-                "entropy": round(entropy, 2),
-                "crack_time": format_time(crack_time_seconds),
-                "hash": hashed_password,
-                "suggested": generate_strong_password(),
-                "warning": warning,
-                "suggestions": suggestions,
-                "score": score,
-                "strength_label": strength_label,
-                "color": color
-            }
+        result = analyze_password(password)
 
     return render_template("index.html", result=result)
 
 
-# -----------------------------
-# Production Run
-# -----------------------------
+# -------------------------
+# MAIN
+# -------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
