@@ -1,105 +1,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SecurePass Analyzer Dashboard</title>
+    <title>SecurePass Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #141e30, #243b55);
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             color: white;
         }
 
         header {
-            background: #1f2a40;
-            padding: 20px;
             text-align: center;
-            font-size: 22px;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            padding: 25px;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
             padding: 30px;
         }
 
         .card {
-            background: #1f2a40;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        h3 {
+            margin-top: 0;
+            font-weight: 500;
         }
 
         input {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             border: none;
-            margin-bottom: 10px;
+            outline: none;
+            margin-bottom: 15px;
+            font-size: 14px;
         }
 
         button {
-            padding: 8px 15px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
             border: none;
-            background: #00d4ff;
             font-weight: bold;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            color: white;
             cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .score-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .strength-label {
+            font-weight: bold;
+            margin-top: 5px;
         }
 
         .progress-bar {
-            background: #444;
             height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
             margin-top: 10px;
+            overflow: hidden;
         }
 
         .progress-fill {
             height: 12px;
-            transition: width 0.4s ease-in-out;
-        }
-
-        .hash-box {
-            word-wrap: break-word;
-            background: #2f3b55;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 11px;
+            border-radius: 8px;
+            transition: width 0.6s ease;
         }
 
         ul {
             padding-left: 18px;
         }
+
+        .hash-box {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            word-wrap: break-word;
+            margin-top: 8px;
+        }
+
+        .highlight {
+            color: #00e6ff;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
 
 <header>
-    🛡 SecurePass Analyzer Dashboard
+    🛡 SecurePass Analyzer
 </header>
 
 <form method="POST">
 <div class="dashboard">
 
-    <!-- Password Input Card -->
+    <!-- Password Input -->
     <div class="card">
         <h3>Password Input</h3>
-        <input type="password" id="password" name="password" placeholder="Enter password" required>
-        <button type="submit">Analyze</button>
+        <input type="password" name="password" placeholder="Enter your password" required>
+        <button type="submit">Analyze Security</button>
     </div>
 
     {% if result %}
 
-    <!-- Security Score Card -->
+    <!-- Security Score -->
     <div class="card">
         <h3>Security Score</h3>
-        <p><strong>{{ result.score }}/100</strong></p>
-        <p style="color: {{ result.color }};"><strong>{{ result.strength_label }}</strong></p>
+        <div class="score-number">{{ result.score }}/100</div>
+        <div class="strength-label" style="color: {{ result.color }}">
+            {{ result.strength_label }}
+        </div>
 
         <div class="progress-bar">
             <div class="progress-fill"
@@ -108,20 +151,16 @@
         </div>
     </div>
 
-    <!-- Crack Time Card -->
+    <!-- Crack Time -->
     <div class="card">
         <h3>Crack Time Simulation</h3>
-        <p><strong>{{ result.crack_time }}</strong></p>
-        <p style="font-size: 12px;">@ 1 Billion guesses/sec</p>
+        <p class="highlight">{{ result.crack_time }}</p>
+        <small>@ 1 Billion guesses/sec</small>
     </div>
 
-    <!-- AI Suggestions Card -->
+    <!-- AI Suggestions -->
     <div class="card">
         <h3>AI Security Suggestions</h3>
-
-        {% if result.warning %}
-        <p style="color:red;"><strong>{{ result.warning }}</strong></p>
-        {% endif %}
 
         {% if result.suggestions %}
         <ul>
@@ -130,13 +169,14 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p>Excellent password!</p>
+        <p class="highlight">Excellent password strength!</p>
         {% endif %}
     </div>
 
-    <!-- Hash + Generated Password -->
+    <!-- Security Details -->
     <div class="card">
         <h3>Security Details</h3>
+
         <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
 
         <p><strong>SHA-256 Hash:</strong></p>
