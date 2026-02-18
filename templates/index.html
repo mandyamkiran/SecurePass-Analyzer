@@ -1,41 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>SecurePass Analyzer</title>
+    <title>SecurePass Analyzer Dashboard</title>
+
     <style>
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             background: linear-gradient(to right, #141e30, #243b55);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
             color: white;
         }
 
-        .container {
+        header {
             background: #1f2a40;
-            padding: 30px;
-            border-radius: 15px;
-            width: 420px;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            padding: 20px;
             text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .card {
+            background: #1f2a40;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
         input {
-            width: 85%;
+            width: 100%;
             padding: 10px;
             border-radius: 8px;
             border: none;
             margin-bottom: 10px;
         }
 
-        .toggle {
+        button {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: none;
+            background: #00d4ff;
+            font-weight: bold;
             cursor: pointer;
-            color: #00d4ff;
-            font-size: 13px;
-            margin-bottom: 10px;
         }
 
         .progress-bar {
@@ -48,124 +61,95 @@
 
         .progress-fill {
             height: 12px;
-            width: 0%;
             transition: width 0.4s ease-in-out;
         }
 
-        .result {
-            margin-top: 20px;
-            text-align: left;
-            font-size: 14px;
+        .hash-box {
+            word-wrap: break-word;
+            background: #2f3b55;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
         }
 
-        .suggestions {
-            margin-top: 10px;
-            font-size: 13px;
-            color: #ffcc00;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            background: #00d4ff;
-            color: black;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
+        ul {
+            padding-left: 18px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🛡 SecurePass Analyzer</h2>
-    <p>AI-Powered Password Security Auditor</p>
+<header>
+    🛡 SecurePass Analyzer Dashboard
+</header>
 
-    <input type="password" id="password" placeholder="Enter password">
-    <div class="toggle" onclick="togglePassword()">Show</div>
+<form method="POST">
+<div class="dashboard">
 
-    <p><strong>Security Score:</strong> <span id="score">0</span>/100</p>
-    <p><strong>Strength:</strong> <span id="strengthLabel">-</span></p>
-
-    <div class="progress-bar">
-        <div id="progressFill" class="progress-fill"></div>
+    <!-- Password Input Card -->
+    <div class="card">
+        <h3>Password Input</h3>
+        <input type="password" id="password" name="password" placeholder="Enter password" required>
+        <button type="submit">Analyze</button>
     </div>
 
-    <div class="suggestions" id="suggestions"></div>
+    {% if result %}
+
+    <!-- Security Score Card -->
+    <div class="card">
+        <h3>Security Score</h3>
+        <p><strong>{{ result.score }}/100</strong></p>
+        <p style="color: {{ result.color }};"><strong>{{ result.strength_label }}</strong></p>
+
+        <div class="progress-bar">
+            <div class="progress-fill"
+                 style="width: {{ result.score }}%; background: {{ result.color }};">
+            </div>
+        </div>
+    </div>
+
+    <!-- Crack Time Card -->
+    <div class="card">
+        <h3>Crack Time Simulation</h3>
+        <p><strong>{{ result.crack_time }}</strong></p>
+        <p style="font-size: 12px;">@ 1 Billion guesses/sec</p>
+    </div>
+
+    <!-- AI Suggestions Card -->
+    <div class="card">
+        <h3>AI Security Suggestions</h3>
+
+        {% if result.warning %}
+        <p style="color:red;"><strong>{{ result.warning }}</strong></p>
+        {% endif %}
+
+        {% if result.suggestions %}
+        <ul>
+            {% for tip in result.suggestions %}
+            <li>{{ tip }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>Excellent password!</p>
+        {% endif %}
+    </div>
+
+    <!-- Hash + Generated Password -->
+    <div class="card">
+        <h3>Security Details</h3>
+        <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
+
+        <p><strong>SHA-256 Hash:</strong></p>
+        <div class="hash-box">{{ result.hash }}</div>
+
+        <p><strong>Suggested Strong Password:</strong></p>
+        <div class="hash-box">{{ result.suggested }}</div>
+    </div>
+
+    {% endif %}
 
 </div>
-
-<script>
-const passwordInput = document.getElementById("password");
-const scoreText = document.getElementById("score");
-const strengthLabel = document.getElementById("strengthLabel");
-const progressFill = document.getElementById("progressFill");
-const suggestionsBox = document.getElementById("suggestions");
-
-passwordInput.addEventListener("input", function () {
-    const password = passwordInput.value;
-
-    let score = 0;
-    let suggestions = [];
-
-    if (password.length >= 12) score += 25;
-    else if (password.length >= 8) score += 15;
-    else if (password.length > 0) score += 5;
-
-    if (/[a-z]/.test(password)) score += 15;
-    else suggestions.push("Add lowercase letters.");
-
-    if (/[A-Z]/.test(password)) score += 15;
-    else suggestions.push("Add uppercase letters.");
-
-    if (/[0-9]/.test(password)) score += 15;
-    else suggestions.push("Include numbers.");
-
-    if (/[^A-Za-z0-9]/.test(password)) score += 15;
-    else suggestions.push("Include special characters.");
-
-    if (password.length < 8)
-        suggestions.push("Use at least 8 characters.");
-
-    score = Math.min(score, 100);
-
-    scoreText.innerText = score;
-    progressFill.style.width = score + "%";
-
-    if (score < 40) {
-        strengthLabel.innerText = "Weak";
-        strengthLabel.style.color = "red";
-        progressFill.style.background = "red";
-    } else if (score < 70) {
-        strengthLabel.innerText = "Moderate";
-        strengthLabel.style.color = "orange";
-        progressFill.style.background = "orange";
-    } else if (score < 85) {
-        strengthLabel.innerText = "Strong";
-        strengthLabel.style.color = "yellow";
-        progressFill.style.background = "yellow";
-    } else {
-        strengthLabel.innerText = "Very Strong";
-        strengthLabel.style.color = "limegreen";
-        progressFill.style.background = "limegreen";
-    }
-
-    suggestionsBox.innerHTML = suggestions.length
-        ? "<strong>AI Suggestions:</strong><br>" + suggestions.join("<br>")
-        : "Excellent password!";
-});
-
-function togglePassword() {
-    if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        document.querySelector(".toggle").innerText = "Hide";
-    } else {
-        passwordInput.type = "password";
-        document.querySelector(".toggle").innerText = "Show";
-    }
-}
-</script>
+</form>
 
 </body>
 </html>
