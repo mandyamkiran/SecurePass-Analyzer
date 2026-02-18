@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -21,46 +19,38 @@
             padding: 25px;
             font-size: 26px;
             font-weight: 600;
-            letter-spacing: 1px;
         }
 
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            padding: 30px;
+        /* Center Hero Section */
+        .hero {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 45vh;
+            text-align: center;
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.08);
+        .hero-card {
+            background: rgba(255,255,255,0.08);
             backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            transition: transform 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        h3 {
-            margin-top: 0;
-            font-weight: 500;
+            padding: 35px;
+            border-radius: 18px;
+            width: 420px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
         input {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             border-radius: 10px;
             border: none;
             outline: none;
             margin-bottom: 15px;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         button {
-            padding: 10px 18px;
+            padding: 12px 20px;
             border-radius: 10px;
             border: none;
             font-weight: bold;
@@ -70,18 +60,27 @@
             transition: 0.3s;
         }
 
-        button:hover {
-            opacity: 0.85;
+        button:hover { opacity: 0.85; }
+
+        /* Dashboard Section */
+        .dashboard {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
         .score-number {
             font-size: 28px;
             font-weight: bold;
-        }
-
-        .strength-label {
-            font-weight: bold;
-            margin-top: 5px;
         }
 
         .progress-bar {
@@ -98,9 +97,7 @@
             transition: width 0.6s ease;
         }
 
-        ul {
-            padding-left: 18px;
-        }
+        ul { padding-left: 18px; }
 
         .hash-box {
             background: rgba(0,0,0,0.3);
@@ -111,10 +108,7 @@
             margin-top: 8px;
         }
 
-        .highlight {
-            color: #00e6ff;
-            font-weight: bold;
-        }
+        .highlight { color: #00e6ff; font-weight: bold; }
 
     </style>
 </head>
@@ -125,70 +119,75 @@
 </header>
 
 <form method="POST">
-<div class="dashboard">
 
-    <!-- Password Input -->
-    <div class="card">
-        <h3>Password Input</h3>
-        <input type="password" name="password" placeholder="Enter your password" required>
-        <button type="submit">Analyze Security</button>
+    <!-- CENTER INPUT -->
+    <div class="hero">
+        <div class="hero-card">
+            <h3>Check Your Password Security</h3>
+            <input type="password" name="password" placeholder="Enter your password" required>
+            <button type="submit">Analyze</button>
+        </div>
     </div>
 
     {% if result %}
 
-    <!-- Security Score -->
-    <div class="card">
-        <h3>Security Score</h3>
-        <div class="score-number">{{ result.score }}/100</div>
-        <div class="strength-label" style="color: {{ result.color }}">
-            {{ result.strength_label }}
-        </div>
+    <!-- RESULTS BELOW -->
+    <div class="dashboard">
 
-        <div class="progress-bar">
-            <div class="progress-fill"
-                 style="width: {{ result.score }}%; background: {{ result.color }};">
+        <!-- Score -->
+        <div class="card">
+            <h3>Security Score</h3>
+            <div class="score-number">{{ result.score }}/100</div>
+            <div style="color: {{ result.color }}; font-weight:bold;">
+                {{ result.strength_label }}
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill"
+                     style="width: {{ result.score }}%; background: {{ result.color }};">
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Crack Time -->
-    <div class="card">
-        <h3>Crack Time Simulation</h3>
-        <p class="highlight">{{ result.crack_time }}</p>
-        <small>@ 1 Billion guesses/sec</small>
-    </div>
+        <!-- Crack Time -->
+        <div class="card">
+            <h3>Crack Time Simulation</h3>
+            <p class="highlight">{{ result.crack_time }}</p>
+            <small>@ 1 Billion guesses/sec</small>
+        </div>
 
-    <!-- AI Suggestions -->
-    <div class="card">
-        <h3>AI Security Suggestions</h3>
+        <!-- Suggestions -->
+        <div class="card">
+            <h3>AI Security Suggestions</h3>
 
-        {% if result.suggestions %}
-        <ul>
-            {% for tip in result.suggestions %}
-            <li>{{ tip }}</li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="highlight">Excellent password strength!</p>
-        {% endif %}
-    </div>
+            {% if result.suggestions %}
+            <ul>
+                {% for tip in result.suggestions %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="highlight">Excellent password strength!</p>
+            {% endif %}
+        </div>
 
-    <!-- Security Details -->
-    <div class="card">
-        <h3>Security Details</h3>
+        <!-- Details -->
+        <div class="card">
+            <h3>Security Details</h3>
 
-        <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
+            <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
 
-        <p><strong>SHA-256 Hash:</strong></p>
-        <div class="hash-box">{{ result.hash }}</div>
+            <p><strong>SHA-256 Hash:</strong></p>
+            <div class="hash-box">{{ result.hash }}</div>
 
-        <p><strong>Suggested Strong Password:</strong></p>
-        <div class="hash-box">{{ result.suggested }}</div>
+            <p><strong>Suggested Strong Password:</strong></p>
+            <div class="hash-box">{{ result.suggested }}</div>
+        </div>
+
     </div>
 
     {% endif %}
 
-</div>
 </form>
 
 </body>
