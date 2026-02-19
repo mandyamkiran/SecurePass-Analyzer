@@ -4,84 +4,110 @@
     <title>SecurePass Analyzer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            margin:0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-            color:white;
-            text-align:center;
-        }
+<style>
+:root {
+    --bg: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    --card: #1f2e3d;
+    --text: white;
+}
 
-        .center-box {
-            margin-top:80px;
-        }
+body.light {
+    --bg: #f4f6f9;
+    --card: white;
+    --text: #222;
+}
 
-        input {
-            padding:12px;
-            width:300px;
-            border-radius:8px;
-            border:none;
-            outline:none;
-        }
+body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    text-align:center;
+    transition:0.3s ease;
+}
 
-        button {
-            padding:12px 20px;
-            margin-top:10px;
-            border:none;
-            border-radius:8px;
-            background:#00c6ff;
-            color:white;
-            cursor:pointer;
-            font-weight:bold;
-        }
+.toggle-theme {
+    position:absolute;
+    top:20px;
+    right:20px;
+    padding:8px 14px;
+    background:#00c6ff;
+    border-radius:20px;
+    cursor:pointer;
+    color:white;
+    font-size:13px;
+}
 
-        .toggle {
-            margin-top:5px;
-            font-size:14px;
-            cursor:pointer;
-            color:#00e6e6;
-        }
+.center-box { margin-top:80px; }
 
-        .live-score {
-            margin-top:20px;
-        }
+input {
+    padding:12px;
+    width:300px;
+    border-radius:8px;
+    border:none;
+    outline:none;
+}
 
-        .progress {
-            background:#444;
-            border-radius:10px;
-            height:10px;
-            margin-top:10px;
-            width:300px;
-            margin-left:auto;
-            margin-right:auto;
-        }
+button {
+    padding:10px 16px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    background:#00c6ff;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
 
-        .progress-fill {
-            height:10px;
-            border-radius:10px;
-            transition: width 0.3s ease;
-        }
+.results {
+    margin-top:60px;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:25px;
+}
 
-        .results {
-            margin-top:60px;
-            display:flex;
-            justify-content:center;
-            flex-wrap:wrap;
-            gap:20px;
-        }
+.card {
+    background: var(--card);
+    padding:20px;
+    border-radius:15px;
+    width:320px;
+    text-align:left;
+}
 
-        .card {
-            background:#1f2e3d;
-            padding:20px;
-            border-radius:15px;
-            width:300px;
-            text-align:left;
-        }
+/* Circular Meter */
+.circle {
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    background:conic-gradient(#4dff88 0%, #444 0%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:20px auto;
+    font-size:22px;
+    font-weight:bold;
+}
 
-    </style>
+/* Copy button */
+.copy-btn {
+    background:#007bff;
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    margin-top:5px;
+    display:inline-block;
+}
+
+small {
+    word-break:break-all;
+}
+
+</style>
 </head>
 <body>
+
+<div class="toggle-theme" onclick="toggleTheme()">Toggle Theme</div>
 
 <h1>🛡 SecurePass Analyzer</h1>
 
@@ -92,34 +118,41 @@
         <button type="submit">Analyze</button>
     </form>
 
-    <div class="toggle" onclick="togglePassword()">Show / Hide Password</div>
-
-    <!-- REAL TIME SCORE -->
-    <div class="live-score">
-        <h3 id="strengthText">Strength: -</h3>
-        <div class="progress">
-            <div id="progressFill" class="progress-fill"></div>
-        </div>
+    <div onclick="togglePassword()" style="margin-top:8px; cursor:pointer; color:#00c6ff;">
+        Show / Hide Password
     </div>
 </div>
 
 {% if result %}
 <div class="results">
 
-    <div class="card">
+    <!-- Circular Score -->
+    <div class="card" style="text-align:center;">
         <h3>Security Score</h3>
-        <h2 style="color: {{ result.color }}">{{ result.score }}/100</h2>
-        <strong>{{ result.strength }}</strong>
+        <div id="scoreCircle" class="circle">
+            {{ result.score }}%
+        </div>
+        <strong style="color: {{ result.color }}">
+            {{ result.strength }}
+        </strong>
     </div>
 
+    <!-- Security Details -->
     <div class="card">
         <h3>Security Details</h3>
         <p><strong>Entropy:</strong> {{ result.entropy }} bits</p>
         <p><strong>Crack Time:</strong> {{ result.crack_time }}</p>
+
         <p><strong>SHA-256:</strong></p>
-        <small style="word-break:break-all;">{{ result.hash }}</small>
+        <small id="hashText">{{ result.hash }}</small>
+        <div class="copy-btn" onclick="copyText('hashText')">Copy Hash</div>
+
+        <p><strong>Suggested Password:</strong></p>
+        <small id="strongPass">{{ result.strong_password }}</small>
+        <div class="copy-btn" onclick="copyText('strongPass')">Copy Password</div>
     </div>
 
+    <!-- Suggestions -->
     <div class="card">
         <h3>AI Suggestions</h3>
         <ul>
@@ -127,55 +160,45 @@
             <li>{{ tip }}</li>
             {% endfor %}
         </ul>
-
-        <h4>Suggested Strong Password:</h4>
-        <small>{{ result.strong_password }}</small>
     </div>
 
 </div>
 {% endif %}
 
 <script>
-function togglePassword() {
-    var x = document.getElementById("password");
-    if (x.type === "password") {
-        x.type = "text";
-    } else {
-        x.type = "password";
+// Theme toggle
+function toggleTheme(){
+    document.body.classList.toggle("light");
+    localStorage.setItem("theme",
+        document.body.classList.contains("light") ? "light":"dark");
+}
+
+window.onload = function(){
+    if(localStorage.getItem("theme")==="light"){
+        document.body.classList.add("light");
+    }
+
+    // Animate circle
+    let circle = document.getElementById("scoreCircle");
+    if(circle){
+        let score = parseInt(circle.innerText);
+        circle.style.background =
+            `conic-gradient(#4dff88 ${score}%, #444 ${score}%)`;
     }
 }
 
-// REAL TIME SCORING (FRONTEND ONLY)
-document.getElementById("password").addEventListener("input", function() {
+// Show/Hide password
+function togglePassword(){
+    let x=document.getElementById("password");
+    x.type = x.type==="password" ? "text":"password";
+}
 
-    let password = this.value;
-    let score = 0;
-
-    if (password.length >= 8) score += 25;
-    if (/[A-Z]/.test(password)) score += 20;
-    if (/[0-9]/.test(password)) score += 20;
-    if (/[^A-Za-z0-9]/.test(password)) score += 25;
-
-    if (password.length > 12) score += 10;
-
-    if (score > 100) score = 100;
-
-    let strengthText = document.getElementById("strengthText");
-    let progressFill = document.getElementById("progressFill");
-
-    progressFill.style.width = score + "%";
-
-    if (score < 40) {
-        strengthText.innerHTML = "Strength: Weak";
-        progressFill.style.background = "#ff4d4d";
-    } else if (score < 70) {
-        strengthText.innerHTML = "Strength: Moderate";
-        progressFill.style.background = "#ffb84d";
-    } else {
-        strengthText.innerHTML = "Strength: Strong";
-        progressFill.style.background = "#4dff88";
-    }
-});
+// Copy function
+function copyText(id){
+    let text=document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text);
+    alert("Copied!");
+}
 </script>
 
 </body>
